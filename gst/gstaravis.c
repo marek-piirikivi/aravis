@@ -148,7 +148,6 @@ gst_aravis_set_caps (GstBaseSrc *src, GstCaps *caps)
 	GstAravis* gst_aravis = GST_ARAVIS(src);
 	GstStructure *structure;
 	ArvPixelFormat pixel_format;
-	int height, width;
 	int depth = 0, bpp = 0;
 	const GValue *frame_rate;
 	const char *caps_string;
@@ -164,10 +163,10 @@ gst_aravis_set_caps (GstBaseSrc *src, GstCaps *caps)
 
 	structure = gst_caps_get_structure (caps, 0);
 
-	arv_camera_get_region (gst_aravis->camera, NULL, NULL, &width, &height);
+	arv_camera_get_region (gst_aravis->camera, NULL, NULL, &gst_aravis->width, &gst_aravis->height);
 
-	gst_structure_get_int (structure, "width", &width);
-	gst_structure_get_int (structure, "height", &height);
+	gst_structure_get_int (structure, "width", &gst_aravis->width);
+	gst_structure_get_int (structure, "height", &gst_aravis->height);
 	gst_structure_get_int (structure, "depth", &depth);
 	gst_structure_get_int (structure, "bpp", &bpp);
 	frame_rate = gst_structure_get_value (structure, "framerate");
@@ -175,7 +174,7 @@ gst_aravis_set_caps (GstBaseSrc *src, GstCaps *caps)
 
 	pixel_format = arv_pixel_format_from_gst_caps (gst_structure_get_name (structure), format_string, bpp, depth);
 
-	arv_camera_set_region (gst_aravis->camera, gst_aravis->offset_x, gst_aravis->offset_y, width, height);
+	arv_camera_set_region (gst_aravis->camera, gst_aravis->offset_x, gst_aravis->offset_y, gst_aravis->width, gst_aravis->height);
 	arv_camera_set_binning (gst_aravis->camera, gst_aravis->h_binning, gst_aravis->v_binning);
 	arv_camera_set_pixel_format (gst_aravis->camera, pixel_format);
 
@@ -242,8 +241,8 @@ gst_aravis_set_caps (GstBaseSrc *src, GstCaps *caps)
 		caps = gst_caps_new_empty ();
 		structure = gst_structure_from_string (caps_string, NULL);
 		gst_structure_set (structure,
-				   "width", G_TYPE_INT, width,
-				   "height", G_TYPE_INT, height,
+				   "width", G_TYPE_INT, gst_aravis->width,
+				   "height", G_TYPE_INT, gst_aravis->height,
 				   NULL);
 
 		if (frame_rate != NULL)
@@ -545,11 +544,24 @@ gst_aravis_set_property (GObject * object, guint prop_id,
 				arv_camera_set_exposure_time_auto (gst_aravis->camera, gst_aravis->exposure_auto);
 			break;
 		case PROP_OFFSET_X:
+		{
+			gint prev_offset_x = gst_aravis->offset_x;
 			gst_aravis->offset_x = g_value_get_int (value);
+			if (gst_aravis->camera != NULL && prev_offset_x != gst_aravis->offset_x) {
+				arv_camera_set_region (gst_aravis->camera, gst_aravis->offset_x, gst_aravis->offset_y, gst_aravis->width, gst_aravis->height);
+			}
 			break;
+		}
 		case PROP_OFFSET_Y:
+		{
+
+			gint prev_offset_y = gst_aravis->offset_y;
 			gst_aravis->offset_y = g_value_get_int (value);
+			if (gst_aravis->camera != NULL && prev_offset_y != gst_aravis->offset_y) {
+				arv_camera_set_region (gst_aravis->camera, gst_aravis->offset_x, gst_aravis->offset_y, gst_aravis->width, gst_aravis->height);
+			}
 			break;
+		}
 		case PROP_H_BINNING:
 			gst_aravis->h_binning = g_value_get_int (value);
 			break;

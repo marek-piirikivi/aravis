@@ -50,6 +50,8 @@ struct _GstAravis {
 
 	gint offset_x;
 	gint offset_y;
+	gint width;
+	gint height;
 
 	gint h_binning;
 	gint v_binning;
