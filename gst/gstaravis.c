@@ -295,7 +295,6 @@ gst_aravis_init_camera (GstAravis *gst_aravis)
 	else
 		gst_aravis->exposure_auto = TRUE;
 
-	arv_camera_get_binning (gst_aravis->camera, &gst_aravis->h_binning, &gst_aravis->v_binning);
 	gst_aravis->payload = 0;
 }
 
